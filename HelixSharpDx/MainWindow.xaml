@@ -1,0 +1,32 @@
+﻿<Window
+    x:Class="HelixSharpDx.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hx="http://helix-toolkit.org/wpf/SharpDX"
+    xmlns:local="clr-namespace:HelixSharpDx"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="MainWindow"
+    Width="800"
+    Height="450"
+    mc:Ignorable="d">
+    <hx:Viewport3DX
+        x:Name="myViewport"
+        Title="title"
+        CameraMode="WalkAround"
+        CameraRotationMode="Trackball"
+        EnableAutoOctreeUpdate="True"
+        EnableDeferredRendering="True"
+        EnableRenderFrustum="True"
+        EnableSwapChainRendering="True"
+        ShowCoordinateSystem="False"
+        ShowFrameDetails="True"
+        ShowFrameRate="True"
+        ShowTriangleCountInfo="False"
+        TextBrush="Black"
+        UseDefaultGestures="False">
+        <!--<hx:AmbientLight3D Color="White" />
+        <hx:DirectionalLight3D Color="White" />-->
+    </hx:Viewport3DX>
+
+</Window>

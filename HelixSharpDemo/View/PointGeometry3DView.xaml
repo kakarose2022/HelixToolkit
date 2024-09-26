@@ -1,0 +1,45 @@
+﻿<UserControl
+    x:Class="HelixSharpDemo.View.PointGeometry3DView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:hx="http://helix-toolkit.org/wpf/SharpDX"
+    xmlns:local="clr-namespace:HelixSharpDemo.View"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Width="800"
+    Height="450"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <hx:Viewport3DX
+        x:Name="view1"
+        Title="{Binding Title}"
+        Grid.Column="0"
+        BackgroundColor="Gray"
+        Camera="{Binding Camera}"
+        CameraMode="Inspect"
+        CameraRotationMode="Trackball"
+        CoordinateSystemLabelForeground="White"
+        EffectsManager="{Binding EffectsManager}">
+        <hx:Viewport3DX.InputBindings>
+            <KeyBinding Key="B" Command="hx:ViewportCommands.BackView" />
+            <KeyBinding Key="F" Command="hx:ViewportCommands.FrontView" />
+            <KeyBinding Key="U" Command="hx:ViewportCommands.TopView" />
+            <KeyBinding Key="D" Command="hx:ViewportCommands.BottomView" />
+            <KeyBinding Key="L" Command="hx:ViewportCommands.LeftView" />
+            <KeyBinding Key="R" Command="hx:ViewportCommands.RightView" />
+            <KeyBinding Command="hx:ViewportCommands.ZoomExtents" Gesture="Control+E" />
+            <MouseBinding Command="hx:ViewportCommands.Rotate" Gesture="RightClick" />
+            <MouseBinding Command="hx:ViewportCommands.Zoom" Gesture="MiddleClick" />
+        </hx:Viewport3DX.InputBindings>
+
+        <hx:PointGeometryModel3D
+            Geometry="{Binding PointGeometry3D}"
+            Size="2,2"
+            Color="White">
+            <hx:PointGeometryModel3D.Transform>
+                <TranslateTransform3D OffsetX="-10" />
+            </hx:PointGeometryModel3D.Transform>
+        </hx:PointGeometryModel3D>
+    </hx:Viewport3DX>
+</UserControl>
