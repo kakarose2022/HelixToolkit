@@ -33,11 +33,12 @@
             Camera="{Binding Camera}"
             CoordinateSystemLabelForeground="White"
             EffectsManager="{Binding EffectsManager}"
+            EnableCursorPosition="True"
             EnableDesignModeRendering="False"
             EnableSwapChainRendering="False"
             FixedRotationPointEnabled="True"
             IsMoveEnabled="True"
-            IsPanEnabled="False"
+            IsPanEnabled="True"
             IsRotationEnabled="True"
             IsShadowMappingEnabled="True"
             IsZoomEnabled="True"
@@ -64,7 +65,7 @@
             <hx:ShadowMap3D OrthoWidth="200" />
             <!--#region 光源-->
             <hx:AmbientLight3D Color="Gray" />
-            <hx:DirectionalLight3D Direction="{Binding Camera.LookDirection}" Color="White" />
+            <hx:DirectionalLight3D Direction="{Binding Camera.LookDirection}" Color="Orange" />
             <!--<hx:DirectionalLight3D Direction="0, 1, 1" Color="White" />-->
             <!--#endregion-->
 
@@ -81,6 +82,15 @@
             <hx:Element3DPresenter Content="{Binding GroupModel}" />
 
             <hx:CoordinateSystemModel3D />
+
+            <!--#region  变换矩阵-->
+            <hx:TransformManipulator3D
+                x:Name="manipulator"
+                CenterOffset="{Binding CenterOffset}"
+                SizeScale="1"
+                Target="{Binding Target}" />
+            <!--#endregion-->
+
 
             <!--<hx:DynamicReflectionMap3D>
                 <hx:MeshGeometryModel3D
@@ -182,6 +192,16 @@
                 <SolidColorBrush Opacity="0.5" Color="WhiteSmoke" />
             </StatusBar.Background>
             <StatusBarItem>
+                <TextBlock>
+                    <Run Text="{Binding Path=CursorPosition.X, ElementName=view1, StringFormat={}{0:f1}, FallbackValue=0.0}" />
+                    <Run Text="," />
+                    <Run Text="{Binding Path=CursorPosition.Y, ElementName=view1, StringFormat={}{0:f1}, FallbackValue=0.0}" />
+                    <Run Text="," />
+                    <Run Text="{Binding Path=CursorPosition.Z, ElementName=view1, StringFormat={}{0:f1}, FallbackValue=0.0}" />
+                </TextBlock>
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
                 <TextBlock
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
@@ -203,6 +223,7 @@
             <StatusBarItem>
                 <TextBlock Text="{Binding Items.Count, ElementName=view1, StringFormat=Children: \{0\}}" />
             </StatusBarItem>
+
         </StatusBar>
     </Grid>
 </UserControl>

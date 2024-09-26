@@ -26,6 +26,8 @@ using HelixToolkit.SharpDX.Core.Model.Scene2D;
 using SharpDX;
 using Color = SharpDX.Color;
 using GeometryModel3D = HelixToolkit.Wpf.SharpDX.GeometryModel3D;
+using System.Diagnostics;
+using MeshGeometry3D = HelixToolkit.SharpDX.Core.MeshGeometry3D;
 
 namespace HelixSharpDemo.ViewModel
 {
@@ -102,6 +104,10 @@ namespace HelixSharpDemo.ViewModel
                 Set(ref pBRMaterial, value);
             }
         }
+
+        /// <summary>
+        ///  所有导入物件的Scene
+        /// </summary>
         private List<HelixToolkitScene> dyGeometry3d;
 
         public List<HelixToolkitScene> SceneNodes
@@ -112,6 +118,21 @@ namespace HelixSharpDemo.ViewModel
                 Set(ref dyGeometry3d, value);
             }
         }
+
+        /// <summary>
+        ///  所有导入物件的Scene的
+        /// </summary>
+        private List<MeshGeometryModel3D> meshGeometryModel3Ds;
+
+        public List<MeshGeometryModel3D> MeshGeometryModel3Ds
+        {
+            get { return meshGeometryModel3Ds; }
+            set
+            {
+                Set(ref meshGeometryModel3Ds, value);
+            }
+        }
+
 
         private bool renderEnvironmentMap = true;
         public bool RenderEnvironmentMap
@@ -131,6 +152,41 @@ namespace HelixSharpDemo.ViewModel
             }
             get => renderEnvironmentMap;
         }
+
+        #region HitResult
+        private Element3D target;
+        public Element3D Target
+        {
+            get { return target; }
+            set 
+            { 
+                Set(ref target, value); 
+            }
+        }
+
+        private Vector3 centerOffset;
+        public Vector3 CenterOffset
+        {
+            get { return centerOffset; }
+            set
+            {
+                Set(ref centerOffset, value);
+            }
+        }
+
+        private double sizeScale;
+
+        public double SizeScale
+        {
+            get { return sizeScale; }
+            set 
+            {
+                Set(ref sizeScale, value);
+            }
+        }
+
+        #endregion
+
         public ICommand SetCameraPostionCommand { private set; get; }
         public ICommand ReloadCameraCommand { private set; get; }
 
@@ -156,6 +212,7 @@ namespace HelixSharpDemo.ViewModel
         public DynamicReflectionMap3DViewModel()
         {
             SceneNodes = new List<HelixToolkitScene>();
+            MeshGeometryModel3Ds = new List<MeshGeometryModel3D>();
             CurrentPostion = new Point3D();
             InitSetting();
             ReloadFile();
@@ -202,7 +259,11 @@ namespace HelixSharpDemo.ViewModel
             {
                 await LoadModelFile(Path.Combine(path, "Goku No Support by MetaLWarrioR.stl"));
             }
-  
+            else if (selectIndex == 2)
+            {
+                await LoadModelFile(Path.Combine(path, $"p0.stl"));
+            }
+
             Reload();
         }
 
@@ -244,16 +305,25 @@ namespace HelixSharpDemo.ViewModel
             //    NearPlaneDistance = -1000
             //};
 
-            this.Camera = new PerspectiveCamera
+            //this.Camera = new PerspectiveCamera
+            //{
+            //    Position = new System.Windows.Media.Media3D.Point3D(446, 3000, 2500),
+            //    LookDirection = new System.Windows.Media.Media3D.Vector3D(-138, -2777, -2777),
+            //    UpDirection = new System.Windows.Media.Media3D.Vector3D(0, 1, 0),
+            //    NearPlaneDistance = 0.1,
+            //    FieldOfView = 45,
+            //    FarPlaneDistance = 20000
+            //};
+
+
+            this.Camera = new OrthographicCamera
             {
-                Position = new System.Windows.Media.Media3D.Point3D(446, 3000, 2500),
-                LookDirection = new System.Windows.Media.Media3D.Vector3D(-138, -2777, -2777),
+                Position = new System.Windows.Media.Media3D.Point3D(0, 0, 0),
+                LookDirection = new System.Windows.Media.Media3D.Vector3D(-1, -1, -1),
                 UpDirection = new System.Windows.Media.Media3D.Vector3D(0, 1, 0),
-                NearPlaneDistance = 0.1,
-                FieldOfView = 45,
+                NearPlaneDistance = -0.1f,
                 FarPlaneDistance = 10000
             };
-
         }
 
         public void Reload()
@@ -342,6 +412,8 @@ namespace HelixSharpDemo.ViewModel
             }
         }
 
+
+        #region 获取所有节点
         public IEnumerable<MeshGeometryModel3D> SceneNodeToMeshGeometry3D(SceneNode node)
         {
             foreach (var single in node.Traverse())
@@ -373,6 +445,12 @@ namespace HelixSharpDemo.ViewModel
             model.Transform = combinedTransform;
         }
 
+        private bool IsUIMeshGeometryModel3D(MeshGeometryModel3D model)
+        {
+            return MeshGeometryModel3Ds.Any(o => o == model);
+        }
+
+        #endregion
 
         private Material ConvertMaterial(MaterialCore materialCore)
         {
@@ -400,6 +478,7 @@ namespace HelixSharpDemo.ViewModel
             return null; 
         }
 
+        #region Effect
         private void PostSelectedEffect(object obj, bool selected)
         {
             if (obj == null)
@@ -431,6 +510,52 @@ namespace HelixSharpDemo.ViewModel
                 }     
             }
         }
+        #endregion
+
+
+        #region MouseDown
+        public void OnMouseDown3DHandler(object sender, MouseDown3DEventArgs e)
+        {
+            if (e.HitTestResult != null 
+                && e.HitTestResult.ModelHit is MeshGeometryModel3D m
+                && IsUIMeshGeometryModel3D(m))
+            {
+                Trace.WriteLine($" Mouse Down{DateTime.Now}");
+
+                Target = null;
+                CenterOffset = m.Geometry.Bound.Center; // Must update this before updating target
+                Target = e.HitTestResult.ModelHit as Element3D;
+                SizeScale = GetBoundBoxMaxWidth(m);
+                Trace.WriteLine($" Mouse Down End {CenterOffset}");
+            }
+        }
+
+        public void OnMouseUp3DDHandler(object sender, MouseUp3DEventArgs e)
+        {
+            if (e.HitTestResult != null 
+                && e.HitTestResult.ModelHit is MeshGeometryModel3D m 
+                && IsUIMeshGeometryModel3D(m))
+            {
+                Trace.WriteLine($" Mouse Up{DateTime.Now}");
+                Target = null;
+                CenterOffset = m.Geometry.Bound.Center; // Must update this before updating target
+                Target = e.HitTestResult.ModelHit as Element3D;
+                Trace.WriteLine($" Mouse UP End {CenterOffset}");
+            }
+        }
+
+        private double GetBoundBoxMaxWidth(MeshGeometryModel3D meshModel)
+        {
+            var geometry = meshModel.Geometry as MeshGeometry3D;
+            var boundingBox = geometry.Bound;
+            var width = boundingBox.Size.X;
+            var height = boundingBox.Size.Y;
+            var depth = boundingBox.Size.Z;
+
+            var maxDimension = Math.Max(width, Math.Max(height, depth));
+            return maxDimension;
+        }
+        #endregion
 
         private void RobotInitTransform(string path, SceneNode sceneNode)
         {

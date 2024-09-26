@@ -21,6 +21,8 @@ using HelixToolkit.SharpDX.Core.Model.Scene;
 using SharpDX.Direct2D1.Effects;
 using HelixToolkit.SharpDX.Core;
 using System.Windows.Markup;
+using MeshGeometry3D = HelixToolkit.SharpDX.Core.MeshGeometry3D;
+using System.Diagnostics;
 
 namespace HelixSharpDemo.View
 {
@@ -68,32 +70,78 @@ namespace HelixSharpDemo.View
         {
             if (this.DataContext is DynamicReflectionMap3DViewModel vm)
             {
+                vm.MeshGeometryModel3Ds.Clear();
                 dynamic.Children.Clear();
                 foreach (var sceneNode in vm.SceneNodes)
                 {
-                    foreach (var meshGeometryModel3D in vm.SceneNodeToMeshGeometry3D(sceneNode.Root))
+                    var oneSceneMeshGeometry3Ds = vm.SceneNodeToMeshGeometry3D(sceneNode.Root);
+                    foreach (var meshGeometryModel3D in oneSceneMeshGeometry3Ds)
                     {
                         dynamic.Children.Add(meshGeometryModel3D);
+                        vm.MeshGeometryModel3Ds.Add(meshGeometryModel3D);
                     }
                 }         
             }
         }
 
-        private void view1_MouseDown3D(object sender, RoutedEventArgs e)
-        {
+        //private void view1_MouseDown3D(object sender, RoutedEventArgs e)
+        //{
+        //    if (this.DataContext is DynamicReflectionMap3DViewModel vm)
+        //    {
+        //        var ev = e as MouseDown3DEventArgs ;
+        //        if (ev != null && !ev.Handled)
+        //        {
+        //            if (ev.HitTestResult != null
+        //                && ev.HitTestResult.ModelHit is MeshGeometryModel3D m)
+        //            {
+        
+        //                Trace.WriteLine("MouseDown....");
 
+
+
+        //                vm.Target = null;
+        //                vm.CenterOffset = m.Geometry.Bound.Center; // Must update this before updating target
+        //                vm.Target = ev.HitTestResult.ModelHit as Element3D;
+        //                vm.SizeScale = GetBoundBoxMaxWidth(m);
+        //            }
+        //        }
+        //    }
+
+        //}
+
+        //private void view1_MouseUp3D(object sender, RoutedEventArgs e)
+        //{
+        //    if (this.DataContext is DynamicReflectionMap3DViewModel vm)
+        //    {
+        //        var ev = e as MouseUp3DEventArgs;
+        //        if (ev != null && !ev.Handled)
+        //        {
+        //            vm.SelectObject = ev.HitTestResult?.ModelHit;
+
+        //            //if (ev.HitTestResult != null
+        //            //    && ev.HitTestResult.ModelHit is MeshGeometryModel3D m)
+        //            //{
+
+        //            //    vm.Target = null;
+        //            //    vm.CenterOffset = m.Geometry.Bound.Center; // Must update this before updating target
+        //            //    vm.Target = ev.HitTestResult.ModelHit as Element3D;
+        //            //}
+        //        }
+        //    }
+        //}
+
+        private double GetBoundBoxMaxWidth(MeshGeometryModel3D meshModel)
+        {
+            var geometry = meshModel.Geometry as MeshGeometry3D;
+            var boundingBox = geometry.Bound;
+            var width = boundingBox.Size.X;
+            var height = boundingBox.Size.Y;
+            var depth = boundingBox.Size.Z;
+
+            var maxDimension = Math.Max(width, Math.Max(height, depth));
+            return maxDimension;
         }
 
-        private void view1_MouseUp3D(object sender, RoutedEventArgs e)
-        {
-            if (this.DataContext is DynamicReflectionMap3DViewModel vm)
-            {
-                var ev = e as MouseUp3DEventArgs;
-                if (ev != null && !ev.Handled)
-                {
-                    vm.SelectObject = ev.HitTestResult?.ModelHit;
-                }
-            }
-        }
+
     }
 }

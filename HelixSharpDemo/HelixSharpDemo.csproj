@@ -29,6 +29,7 @@
   <ItemGroup>
     <PackageReference Include="HelixToolkit.SharpDX.Assimp" Version="2.25.0" />
     <PackageReference Include="HelixToolkit.SharpDX.Core.Wpf" Version="2.25.0" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
   </ItemGroup>
 
 </Project>

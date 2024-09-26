@@ -5,10 +5,13 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:hx="http://helix-toolkit.org/wpf/SharpDX"
     xmlns:hx2D="clr-namespace:HelixToolkit.Wpf.SharpDX.Elements2D;assembly=HelixToolkit.SharpDX.Core.Wpf"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
     xmlns:local="clr-namespace:HelixSharpDemo.View"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewmodel="clr-namespace:HelixSharpDemo.ViewModel"
     Width="850"
     Height="600"
+    d:DataContext="{d:DesignInstance Type=viewmodel:DynamicReflectionMap3DViewModel}"
     Loaded="UserControl_Loaded"
     mc:Ignorable="d">
     <Grid>
@@ -27,7 +30,7 @@
             Grid.Row="0"
             Grid.Column="0"
             Background="LightGray"
-            BackgroundColor="Gray"
+            BackgroundColor="Black"
             Camera="{Binding Camera}"
             CoordinateSystemLabelForeground="White"
             EffectsManager="{Binding EffectsManager}"
@@ -36,12 +39,10 @@
             EnableSwapChainRendering="False"
             FixedRotationPointEnabled="True"
             IsMoveEnabled="True"
-            IsPanEnabled="True"
+            IsPanEnabled="False"
             IsRotationEnabled="True"
             IsShadowMappingEnabled="True"
             IsZoomEnabled="True"
-            MouseDown3D="view1_MouseDown3D"
-            MouseUp3D="view1_MouseUp3D"
             ShowCameraInfo="True"
             ShowCoordinateSystem="True"
             ShowFrameDetails="True"
@@ -62,6 +63,14 @@
                 <MouseBinding Command="hx:ViewportCommands.Zoom" Gesture="MiddleClick" />
                 <MouseBinding Command="hx:ViewportCommands.Pan" Gesture="LeftClick" />
             </hx:Viewport3DX.InputBindings>
+            <i:Interaction.Triggers>
+                <i:EventTrigger EventName="MouseDown3D">
+                    <i:CallMethodAction MethodName="OnMouseDown3DHandler" TargetObject="{Binding}" />
+                </i:EventTrigger>
+                <i:EventTrigger EventName="MouseUp3D">
+                    <i:CallMethodAction MethodName="OnMouseUp3DDHandler" TargetObject="{Binding}" />
+                </i:EventTrigger>
+            </i:Interaction.Triggers>
 
             <hx:ShadowMap3D OrthoWidth="200" />
             <!--#region 光源-->
@@ -80,6 +89,16 @@
             <!--#endregion-->
 
             <hx:DynamicReflectionMap3D x:Name="dynamic" />
+
+            <!--#region  变换矩阵-->
+            <hx:TransformManipulator3D
+                x:Name="manipulator"
+                CenterOffset="{Binding CenterOffset}"
+                EnableScaling="False"
+                EnableXRayGrid="True"
+                SizeScale="{Binding SizeScale}"
+                Target="{Binding Target, UpdateSourceTrigger=PropertyChanged}" />
+            <!--#endregion-->
 
             <!--<hx:MeshGeometryModel3D
                 CullMode="Back"
