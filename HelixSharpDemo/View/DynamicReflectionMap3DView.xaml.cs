@@ -31,29 +31,13 @@ namespace HelixSharpDemo.View
     /// </summary>
     public partial class DynamicReflectionMap3DView : UserControl
     {
+        public DynamicReflectionMap3DViewModel vm { get; set; }
+
         public DynamicReflectionMap3DView()
         {
             InitializeComponent();
-            this.DataContext = new DynamicReflectionMap3DViewModel();
-            view1.AddHandler(Element3D.MouseDown3DEvent, new RoutedEventHandler((s, e) =>
-            {
-                var arg = e as MouseDown3DEventArgs;
-
-                if (arg.HitTestResult == null)
-                {
-                    return;
-                }
-                var aaa =  view1.CursorPosition;
-
-               // view1.UnProject(view1.CursorPosition);
-
-                //if (arg.HitTestResult.ModelHit is SceneNode node && node.Tag is AttachedNodeViewModel vm)
-                if (arg.HitTestResult.ModelHit is MeshGeometryModel3D geometry)
-                {
-                   // MessageBox.Show(@$"x: {arg.Position.X}  Y: {arg.Position.Y}");
-                }
-            }));
-
+            this.DataContext = new DynamicReflectionMap3DViewModel(view1);
+            vm = (DynamicReflectionMap3DViewModel?)this.DataContext;
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
@@ -62,7 +46,6 @@ namespace HelixSharpDemo.View
             {
                 vm.ChangeDyContent -= AttatchToDynamic;
                 vm.ChangeDyContent += AttatchToDynamic;
-                vm.Reload();
             }
         }
 
@@ -70,18 +53,59 @@ namespace HelixSharpDemo.View
         {
             if (this.DataContext is DynamicReflectionMap3DViewModel vm)
             {
-                vm.MeshGeometryModel3Ds.Clear();
+                //viewport
                 dynamic.Children.Clear();
+                //菜单栏
+                newS.Children.Clear();
+
+                var paramsss= new List<double>();
+                paramsss.Clear();
                 foreach (var sceneNode in vm.SceneNodes)
                 {
                     var oneSceneMeshGeometry3Ds = vm.SceneNodeToMeshGeometry3D(sceneNode.Root);
                     foreach (var meshGeometryModel3D in oneSceneMeshGeometry3Ds)
                     {
-                        dynamic.Children.Add(meshGeometryModel3D);
-                        vm.MeshGeometryModel3Ds.Add(meshGeometryModel3D);
+                        //dynamic.Children.Add(meshGeometryModel3D);
+                        paramsss.Add(AddSliderBar());
                     }
-                }         
+                }
+
+                Button button = new Button();
+                button.Command = vm.RobotPlayCommand;
+                button.CommandParameter = paramsss;
+                button.Content = "PLAY";
+                newS.Children.Add(button);
             }
+        }
+
+        private double AddSliderBar()
+        {
+            Slider newSlider = new Slider
+            {
+                Minimum = 0,
+                Maximum = 100,
+                Value = 50,
+                Width = 110,
+                Height = 26,
+                TickFrequency = 1,
+            };
+
+            TextBox textBox = new TextBox();
+            textBox.Text = newSlider.Value.ToString("F2");
+            newSlider.ValueChanged += (s, e) =>
+            {
+                textBox.Text = newSlider.Value.ToString("F2");
+            };
+            textBox.TextChanged += (s, e) =>
+            {
+                if (double.TryParse(textBox.Text, out double value))
+                {
+                    newSlider.Value = value;
+                }
+            };
+            newS.Children.Add(newSlider);
+            newS.Children.Add(textBox);
+            return newSlider.Value;
         }
 
         //private void view1_MouseDown3D(object sender, RoutedEventArgs e)
@@ -96,8 +120,6 @@ namespace HelixSharpDemo.View
         //            {
         
         //                Trace.WriteLine("MouseDown....");
-
-
 
         //                vm.Target = null;
         //                vm.CenterOffset = m.Geometry.Bound.Center; // Must update this before updating target
@@ -141,7 +163,5 @@ namespace HelixSharpDemo.View
             var maxDimension = Math.Max(width, Math.Max(height, depth));
             return maxDimension;
         }
-
-
     }
 }

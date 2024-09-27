@@ -9,15 +9,14 @@
     xmlns:local="clr-namespace:HelixSharpDemo.View"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewmodel="clr-namespace:HelixSharpDemo.ViewModel"
-    Width="850"
     Height="600"
     d:DataContext="{d:DesignInstance Type=viewmodel:DynamicReflectionMap3DViewModel}"
     Loaded="UserControl_Loaded"
     mc:Ignorable="d">
-    <Grid>
+    <Grid HorizontalAlignment="Stretch">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="80" />
+            <ColumnDefinition Width="140" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
@@ -29,8 +28,9 @@
             Title="{Binding Title}"
             Grid.Row="0"
             Grid.Column="0"
-            Background="LightGray"
-            BackgroundColor="Black"
+            HorizontalAlignment="Stretch"
+            Background="White"
+            BackgroundColor="Gray"
             Camera="{Binding Camera}"
             CoordinateSystemLabelForeground="White"
             EffectsManager="{Binding EffectsManager}"
@@ -76,7 +76,7 @@
             <!--#region 光源-->
             <hx:AmbientLight3D Color="White" />
             <!--<hx:DirectionalLight3D Direction="{Binding Camera.LookDirection}" Color="Gray" />-->
-            <hx:DirectionalLight3D Direction="10, -50, -50" Color="White" />
+            <hx:DirectionalLight3D Direction="-10, -40, 10" Color="White" />
             <!--#endregion-->
 
             <!--#region  地图-->
@@ -88,7 +88,11 @@
                 Offset="-260" />
             <!--#endregion-->
 
+
+            <!--#region  模型-->
+            <hx:Element3DPresenter Content="{Binding GroupModel, UpdateSourceTrigger=PropertyChanged}" />
             <hx:DynamicReflectionMap3D x:Name="dynamic" />
+            <!--#endregion-->
 
             <!--#region  变换矩阵-->
             <hx:TransformManipulator3D
@@ -128,31 +132,35 @@
             </hx:Viewport3DX.Content2D>
         </hx:Viewport3DX>
 
-        <StackPanel
+        <ScrollViewer
             Grid.Row="0"
             Grid.RowSpan="2"
             Grid.Column="1">
-            <Button
-                Height="30"
-                Command="{Binding SetCameraPostionCommand}"
-                Content="设置相机方向" />
-            <Button
-                Height="30"
-                Command="{Binding ReloadCameraCommand}"
-                Content="重新加载" />
+            <StackPanel x:Name="command">
+                <Button
+                    Height="30"
+                    Command="{Binding SetCameraPostionCommand}"
+                    Content="设置相机方向" />
+                <Button
+                    Height="30"
+                    Command="{Binding ReloadCameraCommand}"
+                    Content="重新加载" />
 
-            <Button
-                Height="30"
-                Command="{Binding ReloadCameraCommand}"
-                Content="模型位移" />
+                <Button
+                    Height="30"
+                    Command="{Binding ReloadCameraCommand}"
+                    Content="模型位移" />
 
-            <ComboBox SelectedIndex="{Binding SelectIndex}">
-                <ComboBoxItem Content="模型1" />
-                <ComboBoxItem Content="模型2" />
-                <ComboBoxItem Content="模型3" />
-            </ComboBox>
-        </StackPanel>
+                <ComboBox HorizontalContentAlignment="Center" SelectedIndex="{Binding SelectIndex}">
+                    <ComboBoxItem Content="模型1" />
+                    <ComboBoxItem Content="模型2" />
+                    <ComboBoxItem Content="模型3" />
+                    <ComboBoxItem Content="模型4" />
+                </ComboBox>
 
+                <StackPanel x:Name="newS" />
+            </StackPanel>
+        </ScrollViewer>
 
         <StatusBar
             x:Name="Statusbar"

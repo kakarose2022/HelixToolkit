@@ -9,7 +9,7 @@
     xmlns:local="clr-namespace:HelixSharpDemo.View"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:viewmodel="clr-namespace:HelixSharpDemo.ViewModel"
-    Width="800"
+    Width="850"
     Height="450"
     d:DataContext="{d:DesignInstance Type=viewmodel:ModelVisual3DViewModel}"
     mc:Ignorable="d">
@@ -76,7 +76,7 @@
                 AutoSpacing="False"
                 GridPattern="Tile"
                 RenderShadowMap="True"
-                Offset="-1" />
+                Offset="-1000" />
             <!--#endregion-->
 
             <hx:Element3DPresenter Content="{Binding GroupModel}" />

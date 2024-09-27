@@ -460,7 +460,7 @@ namespace HelixSharpDemo.ViewModel
                                 }
                             }
                         }
-                        //RobotInitTransform(path, loadedScene?.Root);
+                        RobotInitTransform(path, loadedScene?.Root);
                         GroupModel.AddNode(loadedScene?.Root);
                         //SceneNodeToMeshGeometry3D(loadedScene?.Root);
 
