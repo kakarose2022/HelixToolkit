@@ -65,7 +65,7 @@ namespace HelixSharpDemo.View
                     var oneSceneMeshGeometry3Ds = vm.SceneNodeToMeshGeometry3D(sceneNode.Root);
                     foreach (var meshGeometryModel3D in oneSceneMeshGeometry3Ds)
                     {
-                        //dynamic.Children.Add(meshGeometryModel3D);
+                        dynamic.Children.Add(meshGeometryModel3D);
                         paramsss.Add(AddSliderBar());
                     }
                 }

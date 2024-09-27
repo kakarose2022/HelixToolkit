@@ -131,20 +131,7 @@ namespace HelixSharpDemo.ViewModel
             }
         }
 
-
-        /// <summary>
-        ///  所有导入物件的Scene的
-        /// </summary>
-        //private List<MeshGeometryModel3D> meshGeometryModel3Ds;
-
-        //public List<MeshGeometryModel3D> MeshGeometryModel3Ds
-        //{
-        //    get { return meshGeometryModel3Ds; }
-        //    set
-        //    {
-        //        Set(ref meshGeometryModel3Ds, value);
-        //    }
-        //}
+        public Dictionary<string, MeshGeometryModel3D> MeshGeometryModel3Ds { get; set; }
 
         private HelixToolkitScene scene;
         private bool renderEnvironmentMap = true;
@@ -232,8 +219,8 @@ namespace HelixSharpDemo.ViewModel
         {
             SceneNodes = new List<HelixToolkitScene>();
             GroupModel = new SceneNodeGroupModel3D();
+            MeshGeometryModel3Ds = new Dictionary<string, MeshGeometryModel3D>();
 
-            //MeshGeometryModel3Ds = new List<MeshGeometryModel3D>();
             CurrentPostion = new Point3D();
             InitRobotTransform();
             InitSetting();
@@ -373,7 +360,6 @@ namespace HelixSharpDemo.ViewModel
 
         public async Task<HelixToolkitScene> LoadModelFile(string path)
         {
-
             await semaphoreSlim.WaitAsync();
             try
             {
@@ -400,27 +386,13 @@ namespace HelixSharpDemo.ViewModel
                                     {
                                         phong.RenderEnvironmentMap = RenderEnvironmentMap;
                                     }
-
                                     m.Material  = ConvertMaterial(m.Material);
-
-                                    //var normalMap = TextureModel.Create(new System.Uri("TextureNoise1_dot3.dds", System.UriKind.RelativeOrAbsolute).ToString());
-                                    //m.Material = new PBRMaterial()
-                                    //{
-                                    //    AlbedoColor = System.Windows.Media.Colors.Blue.ToColor4(),
-                                    //    RoughnessFactor = 0,
-                                    //    MetallicFactor = 0.5,
-                                    //    RenderEnvironmentMap = true,
-                                    //    EnableAutoTangent = true,
-                                    //    RenderShadowMap = true,
-                                    //    ReflectanceFactor = 1,
-                                    //    ClearCoatRoughness = 1,
-                                    //    ClearCoatStrength = 1,
-                                    //};
                                 }
                             }
                         }
 
                         RobotInitTransform(path, loadedScene?.Root);
+                        loadedScene.Root.Tag = loadedScene?.Root.ModelMatrix;
 
                         //SceneNodeToMeshGeometry3D(loadedScene?.Root);
 
@@ -463,23 +435,24 @@ namespace HelixSharpDemo.ViewModel
             {
                 if(single is MeshNode meshNode)
                 {
-                    continue;
+                    //continue;
                     var model = new MeshGeometryModel3D
-                        {
-                            Geometry = meshNode.Geometry,
-                            CullMode = SharpDX.Direct3D11.CullMode.Back,
-                            Material = ConvertMaterial(meshNode.Material),
-                            IsThrowingShadow = true,
-                            ////将模型的变换矩阵转换为 WPF 所需的 Matrix3D 格式
-                            //Transform = new MatrixTransform3D(meshNode.ModelMatrix.ToMatrix3D())
-                        };
+                    {
+                        Geometry = meshNode.Geometry,
+                        CullMode = SharpDX.Direct3D11.CullMode.Back,
+                        Material = ConvertMaterial1(meshNode.Material),
+                        IsThrowingShadow = false,
+                        ////将模型的变换矩阵转换为 WPF 所需的 Matrix3D 格式
+                        // node.ModelMatrix
+                        Transform = new MatrixTransform3D(node.ModelMatrix.ToMatrix3D())
+                    };
 
-                    //Transform(model, meshNode.ModelMatrix.ToMatrix3D());
+                    MeshGeometryModel3Ds.Add(model.GUID.ToString(), model);
                     yield return model;
                 }
                 else
                 {
-                    GroupModel.AddNode(node);
+                    //GroupModel.AddNode(node);
                 }
             }
         }
@@ -505,9 +478,9 @@ namespace HelixSharpDemo.ViewModel
 
         private bool IsUIMeshGeometryModel3D(MeshGeometryModel3D model)
         {
-            //return MeshGeometryModel3Ds.Any(o => o == model);
-
-            return SceneNodes.Any(o => SceneNodeToMeshGeometry3D(o?.Root).Any(x => x == model));
+           //var aa = SceneNodes.SelectMany(o => SceneNodeToMeshGeometry3D(o?.Root)).Select(o => o.GUID);
+           // return SceneNodes.SelectMany(o => SceneNodeToMeshGeometry3D(o?.Root)).Any(x => x.GUID == model.GUID);
+            return MeshGeometryModel3Ds.ContainsKey(model.GUID.ToString());
         }
 
         #endregion
@@ -536,6 +509,32 @@ namespace HelixSharpDemo.ViewModel
                 return new DiffuseMaterial(DiffuseMaterial);
             }
             return null; 
+        }
+
+        private Material ConvertMaterial1(MaterialCore materialCore)
+        {
+            if (materialCore is PBRMaterialCore pbrMaterial)
+            {
+                return new PBRMaterial(pbrMaterial);
+            }
+            else if (materialCore is PhongMaterialCore phongMaterial)
+            {
+
+                return new PhongMaterial(phongMaterial)
+                {
+                    // 设置青铜色
+                    DiffuseColor = Colors.Red.ToColor4(), // 青铜色
+                    //SpecularColor = new Color4(255 / 255f, 255 / 255f, 224 / 255f, 1.0f), // 浅金色高光
+                    SpecularShininess = 264, // 提高高光强度
+                                             // 可选：增加自发光
+                    EmissiveColor = new Color4(0, 0, 0, 0) // 无自发光，可根据需要调整
+                };
+            }
+            else if (materialCore is DiffuseMaterialCore DiffuseMaterial)
+            {
+                return new DiffuseMaterial(DiffuseMaterial);
+            }
+            return null;
         }
 
         #region Effect
@@ -643,6 +642,7 @@ namespace HelixSharpDemo.ViewModel
                 && e.HitTestResult.ModelHit is MeshGeometryModel3D m
                 && IsUIMeshGeometryModel3D(m))
             {
+                SelectObject = m;
                 Target = null;
                 CenterOffset = m.Geometry.Bound.Center; // Must update this before updating target
                 Target = e.HitTestResult.ModelHit as Element3D;

@@ -88,9 +88,8 @@
                 Offset="-260" />
             <!--#endregion-->
 
-
             <!--#region  模型-->
-            <hx:Element3DPresenter Content="{Binding GroupModel, UpdateSourceTrigger=PropertyChanged}" />
+            <!--<hx:Element3DPresenter Content="{Binding GroupModel, UpdateSourceTrigger=PropertyChanged}" />-->
             <hx:DynamicReflectionMap3D x:Name="dynamic" />
             <!--#endregion-->
 
