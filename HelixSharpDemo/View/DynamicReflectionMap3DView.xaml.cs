@@ -46,6 +46,8 @@ namespace HelixSharpDemo.View
             {
                 vm.ChangeDyContent -= AttatchToDynamic;
                 vm.ChangeDyContent += AttatchToDynamic;
+                vm.OnPlay -= Test;
+                vm.OnPlay += Test;
             }
         }
 
@@ -78,6 +80,30 @@ namespace HelixSharpDemo.View
             }
         }
 
+        public void Test(List<Matrix3D> matrix3Ds)
+        {
+            if (this.DataContext is DynamicReflectionMap3DViewModel vm)
+            {
+                int index = 0;
+                foreach (var child in dynamic.Children)
+                {
+                    if(child is Element3D element3d)
+                    {
+                       if(element3d.Transform is MatrixTransform3D group)
+                        {
+                          
+                            group.Matrix = matrix3Ds[index];
+                            index++;
+
+                            //group.Matrix = group.Matrix * new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 0), 270)).Value;
+                            //group.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new System.Windows.Media.Media3D.Vector3D(1, 0, 0), 270)));
+                        }
+                    }
+                }
+            }
+        }
+
+
         private double AddSliderBar()
         {
             Slider newSlider = new Slider
@@ -95,6 +121,7 @@ namespace HelixSharpDemo.View
             newSlider.ValueChanged += (s, e) =>
             {
                 textBox.Text = newSlider.Value.ToString("F2");
+                LoadPostion();
             };
             textBox.TextChanged += (s, e) =>
             {
@@ -107,6 +134,37 @@ namespace HelixSharpDemo.View
             newS.Children.Add(textBox);
             return newSlider.Value;
         }
+
+        private void LoadPostion()
+        {
+            if (this.DataContext is DynamicReflectionMap3DViewModel vm)
+            {
+                //var sliders = newS.Children.to.Select(o => o is Slider slider);
+                List<Slider> sliders = new List<Slider>();
+                foreach (var child in newS.Children)
+                {
+                    if(child is Slider s)
+                    {
+                        sliders.Add(s);
+                    }
+                }
+
+                List<double> values = new List<double>();
+                foreach (var slider in sliders)
+                {
+                    values.Add(slider.Value);
+                }
+
+               var matrix3Ds =  vm.GetMatrix3s(values.ToArray());
+                Test(matrix3Ds);
+
+
+
+            }
+        }
+
+
+
 
         //private void view1_MouseDown3D(object sender, RoutedEventArgs e)
         //{

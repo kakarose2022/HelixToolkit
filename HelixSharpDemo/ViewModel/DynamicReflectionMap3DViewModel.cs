@@ -32,13 +32,14 @@ using System.Windows.Controls;
 using Point = SharpDX.Point;
 using Vector3D = System.Windows.Media.Media3D.Vector3D;
 using System.Transactions;
+using System.Numerics;
+using Vector3 = SharpDX.Vector3;
 
 namespace HelixSharpDemo.ViewModel
 {
     public class DynamicReflectionMap3DViewModel : BaseViewModel
     {
         private object selectObject;
-
         public object SelectObject
         {
             get { return selectObject; }
@@ -197,10 +198,13 @@ namespace HelixSharpDemo.ViewModel
 
         public delegate void ChangeDyContentEvent();
         public event ChangeDyContentEvent? ChangeDyContent;
+
+        public delegate void OnPlayEvent(List<Matrix3D> matrix3Ds);
+        public event OnPlayEvent? OnPlay;
+
         private HelixToolkit.Wpf.SharpDX.Viewport3DX viewport { set; get; }
+
         #region transform
-
-
         public Point3D CurrentPostion {  set; get; }
         public Transform3DGroup F1 { get; set; }
         public Transform3DGroup F2 { get; set; }
@@ -250,16 +254,17 @@ namespace HelixSharpDemo.ViewModel
                 ReloadFile();
             });
 
-            RobotPlayCommand = new RelayCommand(o =>
+            RobotPlayCommand = new RelayCommand(async o =>
             {
-                OnPlay(o);
+                //await OnMove(o);
+                Move(GetMatrix3s(new double[6] {0,0,0,0,0,0}));
             });
 
             base.InitSetting();
             Reload();
         }
 
-        protected async void ReloadFile()
+        protected async Task ReloadFile()
         {
             SceneNodes.Clear();
             GroupModel.Clear();
@@ -320,7 +325,6 @@ namespace HelixSharpDemo.ViewModel
             //AxisLabels = texts.ToBillboardImage3D(EffectsManager);
         }
 
-
         private void SetDefaultCameraView()
         {
             //Camera = new OrthographicCamera()
@@ -341,7 +345,6 @@ namespace HelixSharpDemo.ViewModel
                 FieldOfView = 45,
                 FarPlaneDistance = 20000
             };
-
 
             //this.Camera = new OrthographicCamera
             //{
@@ -456,8 +459,7 @@ namespace HelixSharpDemo.ViewModel
                 }
             }
         }
-
-        
+   
         /// <summary>
         /// 模型翻转立正
         /// </summary>
@@ -482,7 +484,6 @@ namespace HelixSharpDemo.ViewModel
            // return SceneNodes.SelectMany(o => SceneNodeToMeshGeometry3D(o?.Root)).Any(x => x.GUID == model.GUID);
             return MeshGeometryModel3Ds.ContainsKey(model.GUID.ToString());
         }
-
         #endregion
 
         private Material ConvertMaterial(MaterialCore materialCore)
@@ -493,7 +494,6 @@ namespace HelixSharpDemo.ViewModel
             }
             else if (materialCore is PhongMaterialCore phongMaterial)
             {
-
                 return new PhongMaterial(phongMaterial)
                 {
                     // 设置青铜色
@@ -572,66 +572,149 @@ namespace HelixSharpDemo.ViewModel
         #endregion
 
         #region 运动
-        private void OnPlay(object robotAngles)
+        private async Task OnMove(object robotAngles)
         {
-            if(robotAngles is IEnumerable<double> angles)
+            if(robotAngles is List<double> angles)
             {
-                var transform3DGroups = new List<Transform3DGroup>();
-                #region translationParams
-                var angeless = angles.ToList();
-                var translationParams = new[]
-                {
-                      new { Translate = new Vector3D(0.0, 0.0, 77.9), Angle = 0.0, Axis = new Vector3D(0.0, 0.0, 1.0), Point = new Point3D(0.0, 0.0, 0.0) },
-                      new { Translate = new Vector3D(0.0, 0.0, 66.0), Angle = angeless[1], Axis = new Vector3D(0.0, 1.0, 0.0), Point = new Point3D(0.0, 0.0, 66.0) },
-                      new { Translate = new Vector3D(0.0, 0.0, 66.0), Angle = -15.47 + angeless[2], Axis = new Vector3D(0.0, 1.0, 0.0), Point = new Point3D(0.0, 0.0, 66.0) },
-                      new { Translate = new Vector3D(-43.37, 0.0, 54.0), Angle = angeless[1] - angeless[2], Axis = new Vector3D(0.0, 1.0, 0.0), Point = new Point3D(-43.37, 0.0, 54.0) },
-                      new { Translate = new Vector3D(-81.722, 0.0, 57.63299999999998), Angle = -angeless[1] + angeless[2], Axis = new Vector3D(0.0, 1.0, 0.0), Point = new Point3D(-81.722, 0.0, 57.63299999999998) },
-                      new { Translate = new Vector3D(15.34, 0.0, 31.5), Angle = angeless[3], Axis = new Vector3D(1.0, 0.0, 0.0), Point = new Point3D(15.34, 0.0, 31.5) },
-                      new { Translate = new Vector3D(41.5, 3.5, 0.0), Angle = angeless[4], Axis = new Vector3D(0.0, 1.0, 0.0), Point = new Point3D(41.5, 3.5, 0.0) },
-                };
-         
-                for (int i = 0; i < translationParams.Length; i++)
-                {
-                    Transform3DGroup transform3DGroup = new Transform3DGroup();
-                    if (i == 0)
-                    {
-                        this.R = new RotateTransform3D(new AxisAngleRotation3D(translationParams[i].Axis, translationParams[i].Angle), translationParams[i].Point);
-                        transform3DGroup.Children.Add(R);
-                    }
-                    else
-                    {
-                        this.T = new TranslateTransform3D(translationParams[i].Translate.X, translationParams[i].Translate.Y, translationParams[i].Translate.Z);
-                        transform3DGroup.Children.Add(this.T);
+                #region Transform
+                //Transform3DGroup F1 = new Transform3DGroup();
+                //Transform3DGroup F2 = new Transform3DGroup();
+                //Transform3DGroup F3 = new Transform3DGroup();
+                //Transform3DGroup F4 = new Transform3DGroup();
+                //Transform3DGroup F5 = new Transform3DGroup();
+                //Transform3DGroup F6 = new Transform3DGroup();
+                //Transform3DGroup F7 = new Transform3DGroup();
+                //Transform3DGroup F8 = new Transform3DGroup();
+                //Transform3DGroup F9 = new Transform3DGroup();
+                //Transform3DGroup F10 = new Transform3DGroup();
+                this.R = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0.0, 0.0, 1.0), 0.0), new Point3D(0.0, 0.0, 0.0));
+                F1.Children.Add(this.R);
 
-                        if (translationParams[i].Angle != 0.0)
-                        {
-                            this.R = new RotateTransform3D(new AxisAngleRotation3D(translationParams[i].Axis, translationParams[i].Angle), translationParams[i].Point);
-                            transform3DGroup.Children.Add(this.R);
-                        }
+                this.T = new TranslateTransform3D(0.0, 0.0, 77.9);
+                this.R = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0.0, 0.0, 1.0), angles[0]), new Point3D(0.0, 0.0, 77.9));
+                F2.Children.Add(this.T);
+                F2.Children.Add(this.R);
+                F2.Children.Add(F1);
 
-                        transform3DGroups.Add(transform3DGroups[i]);
-                    }
-                    transform3DGroups.Add(transform3DGroup);
-                }
+                this.T = new TranslateTransform3D(0.0, 0.0, 66.0);
+                this.R = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0.0, 1.0, 0.0), angles[1]), new Point3D(0.0, 0.0, 66.0));
+                F3.Children.Add(this.T);
+                F3.Children.Add(this.R);
+                F3.Children.Add(F2);
 
-                var ttransform3DGroup = new Transform3DGroup();
-                this.T = new TranslateTransform3D(86.925, angeless[5] * 0.8, 0.0);
-                ttransform3DGroup.Children.Add(transform3DGroups.LastOrDefault());
-                ttransform3DGroup.Children.Add(this.T);
-                transform3DGroups.Add(ttransform3DGroup);
+                this.T = new TranslateTransform3D(0.0, 0.0, 66.0);
+                this.R = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0.0, 1.0, 0.0), -15.47 + angles[2]), new Point3D(0.0, 0.0, 66.0));
+                F4.Children.Add(this.T);
+                F4.Children.Add(this.R);
+                F4.Children.Add(F2);
 
+                this.T = new TranslateTransform3D(-43.37, 0.0, 54.0);
+                this.R = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0.0, 1.0, 0.0), angles[1] - angles[2]), new Point3D(-43.37, 0.0, 54.0));
+                F5.Children.Add(this.T);
+                F5.Children.Add(this.R);
+                this.R = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0.0, 1.0, 0.0), angles[2]), new Point3D(0.0, 0.0, 64.0));
+                F5.Children.Add(this.R);
+                F5.Children.Add(F2);
 
-                this.T = new TranslateTransform3D(86.925, -angeless[5] * 0.8, 0.0);
-                ttransform3DGroup.Children.Add(transform3DGroups.LastOrDefault());
-                ttransform3DGroup.Children.Add(this.T);
-                transform3DGroups.Add(ttransform3DGroup);
+                this.T = new TranslateTransform3D(-81.722, 0.0, 57.63299999999998);
+                this.R = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0.0, 1.0, 0.0), -angles[1] + angles[2]), new Point3D(-81.722, 0.0, 57.63299999999998));
+                F6.Children.Add(this.T);
+                F6.Children.Add(this.R);
+                F6.Children.Add(F3);
+
+                this.T = new TranslateTransform3D(15.34, 0.0, 31.5);
+                this.R = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1.0, 0.0, 0.0), angles[3]), new Point3D(15.34, 0.0, 31.5));
+                F7.Children.Add(this.T);
+                F7.Children.Add(this.R);
+                F7.Children.Add(F6);
+
+                this.T = new TranslateTransform3D(41.5, 3.5, 0.0);
+                this.R = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0.0, 1.0, 0.0), angles[4]), new Point3D(41.5, 3.5, 0.0));
+                F8.Children.Add(this.T);
+                F8.Children.Add(this.R);
+                F8.Children.Add(F7);
+
+                this.T = new TranslateTransform3D(86.925, angles[5] * 0.8, 0.0);
+                F9.Children.Add(this.T);
+                F9.Children.Add(F8);
+
+                this.T = new TranslateTransform3D(86.925, -angles[5] * 0.8, 0.0);
+                F10.Children.Add(this.T);
+                F10.Children.Add(F8);
                 #endregion
 
-                for (int i = 0; i < transform3DGroups.Count; i++)
-                {
-                    //MeshGeometryModel3Ds[i].Transform = transform3DGroups[i];
-                }
+                var transform3DGroup = new List<Transform3DGroup>();
+                transform3DGroup.Add(F1);
+                transform3DGroup.Add(F2);
+                transform3DGroup.Add(F3);
+                transform3DGroup.Add(F4);
+                transform3DGroup.Add(F5);
+                transform3DGroup.Add(F6);
+                transform3DGroup.Add(F7);
+                transform3DGroup.Add(F8);
+                transform3DGroup.Add(F9);
+                transform3DGroup.Add(F10);
+
+                await ReloadFile();
             }
+        }
+
+        public List<Matrix3D> GetMatrix3s(double[] angles)
+        {
+            List<Matrix3D> matrices = new List<Matrix3D>();
+
+            matrices.Add(new RotateTransform3D(
+                new AxisAngleRotation3D(new Vector3D(0.0, 0.0, 1.0), 0.0),
+                new Point3D(0.0, 0.0, 0.0)).Value);
+
+            matrices.Add(new TranslateTransform3D(0.0, 0.0, 77.9).Value
+                          * new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0.0, 0.0, 1.0), angles[0]),new Point3D(0.0, 0.0, 77.9)).Value
+                          * matrices[0]);
+
+            matrices.Add(new TranslateTransform3D(0.0, 0.0, 66.0).Value
+                          * new RotateTransform3D(
+                              new AxisAngleRotation3D(new Vector3D(0.0, 1.0, 0.0), angles[1]),
+                              new Point3D(0.0, 0.0, 66.0)).Value
+                           * matrices[1]);
+
+            matrices.Add(new TranslateTransform3D(0.0, 0.0, 66.0).Value
+                          * new RotateTransform3D(
+                              new AxisAngleRotation3D(new Vector3D(0.0, 1.0, 0.0), -15.47 + angles[2]),
+                              new Point3D(0.0, 0.0, 66.0)).Value
+                           * matrices[2]);
+
+            matrices.Add(new TranslateTransform3D(-43.37, 0.0, 54.0).Value
+                          * new RotateTransform3D(
+                              new AxisAngleRotation3D(new Vector3D(0.0, 1.0, 0.0), angles[1] - angles[2]),
+                              new Point3D(-43.37, 0.0, 54.0)).Value
+                              * matrices[3]);
+
+            matrices.Add(new TranslateTransform3D(-81.722, 0.0, 57.63299999999998).Value
+                          * new RotateTransform3D(
+                              new AxisAngleRotation3D(new Vector3D(0.0, 1.0, 0.0), -angles[1] + angles[2]),
+                              new Point3D(-81.722, 0.0, 57.63299999999998)).Value
+                           * matrices[4]);
+
+            matrices.Add(new TranslateTransform3D(15.34, 0.0, 31.5).Value
+                          * new RotateTransform3D(
+                              new AxisAngleRotation3D(new Vector3D(1.0, 0.0, 0.0), angles[3]),
+                              new Point3D(15.34, 0.0, 31.5)).Value 
+                           * matrices[5]);
+
+            matrices.Add(new TranslateTransform3D(41.5, 3.5, 0.0).Value
+                          * new RotateTransform3D(
+                              new AxisAngleRotation3D(new Vector3D(0.0, 1.0, 0.0), angles[4]),
+                              new Point3D(41.5, 3.5, 0.0)).Value
+                           * matrices[6]);
+
+            matrices.Add(new TranslateTransform3D(86.925, angles[5] * 0.8, 0.0).Value);
+            matrices.Add(new TranslateTransform3D(86.925, -angles[5] * 0.8, 0.0).Value);
+            return matrices;
+        }
+
+        private void Move(List<Matrix3D> matrix3Ds)
+        {
+            OnPlay?.Invoke(matrix3Ds);
         }
         #endregion
 
@@ -678,10 +761,10 @@ namespace HelixSharpDemo.ViewModel
         }
         #endregion
 
-
         #region 计算通用方法
 
         #endregion
+
         public void InitRobotTransform()
         {
             RotateTransform3D R = new RotateTransform3D();
