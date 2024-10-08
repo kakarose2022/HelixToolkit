@@ -90,17 +90,27 @@
 
             <!--#region  模型-->
             <!--<hx:Element3DPresenter Content="{Binding GroupModel, UpdateSourceTrigger=PropertyChanged}" />-->
-            <hx:DynamicReflectionMap3D x:Name="dynamic" />
+            <hx:DynamicReflectionMap3D x:Name="Dynamicc" />
             <!--#endregion-->
 
             <!--#region  变换矩阵-->
             <hx:TransformManipulator3D
-                x:Name="manipulator"
+                x:Name="transformManipulator3D"
                 CenterOffset="{Binding CenterOffset}"
                 EnableScaling="False"
                 EnableXRayGrid="True"
                 SizeScale="{Binding SizeScale}"
-                Target="{Binding Target, UpdateSourceTrigger=PropertyChanged}" />
+                Target="{Binding Target, UpdateSourceTrigger=PropertyChanged}"
+                Transform="{Binding ManipulatorTransform}">
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="MouseDown3D">
+                        <i:CallMethodAction MethodName="OnMouseDown3DHandler" TargetObject="{Binding}" />
+                    </i:EventTrigger>
+                    <i:EventTrigger EventName="MouseUp3D">
+                        <i:CallMethodAction MethodName="OnMouseUp3DDHandler" TargetObject="{Binding}" />
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
+            </hx:TransformManipulator3D>
             <!--#endregion-->
 
             <!--<hx:MeshGeometryModel3D
@@ -149,6 +159,11 @@
                     Height="30"
                     Command="{Binding ReloadCameraCommand}"
                     Content="模型位移" />
+
+                <Button
+                    Height="30"
+                    Command="{Binding ResetManipulatorCommand}"
+                    Content="设置Manipulator方向" />
 
                 <ComboBox HorizontalContentAlignment="Center" SelectedIndex="{Binding SelectIndex}">
                     <ComboBoxItem Content="模型1" />

@@ -23,6 +23,7 @@ using HelixToolkit.SharpDX.Core;
 using System.Windows.Markup;
 using MeshGeometry3D = HelixToolkit.SharpDX.Core.MeshGeometry3D;
 using System.Diagnostics;
+using System.Windows.Input.Manipulations;
 
 namespace HelixSharpDemo.View
 {
@@ -48,6 +49,8 @@ namespace HelixSharpDemo.View
                 vm.ChangeDyContent += AttatchToDynamic;
                 vm.OnPlay -= Test;
                 vm.OnPlay += Test;
+                vm.ChangePostionByUi -= Test;
+                vm.ChangePostionByUi -= Test;
             }
         }
 
@@ -56,7 +59,7 @@ namespace HelixSharpDemo.View
             if (this.DataContext is DynamicReflectionMap3DViewModel vm)
             {
                 //viewport
-                dynamic.Children.Clear();
+                Dynamicc.Children.Clear();
                 //菜单栏
                 newS.Children.Clear();
 
@@ -67,7 +70,7 @@ namespace HelixSharpDemo.View
                     var oneSceneMeshGeometry3Ds = vm.SceneNodeToMeshGeometry3D(sceneNode.Root);
                     foreach (var meshGeometryModel3D in oneSceneMeshGeometry3Ds)
                     {
-                        dynamic.Children.Add(meshGeometryModel3D);
+                        Dynamicc.Children.Add(meshGeometryModel3D);
                         paramsss.Add(AddSliderBar());
                     }
                 }
@@ -85,19 +88,25 @@ namespace HelixSharpDemo.View
             if (this.DataContext is DynamicReflectionMap3DViewModel vm)
             {
                 int index = 0;
-                foreach (var child in dynamic.Children)
+
+                var aa = transformManipulator3D.Transform; 
+
+                foreach (var child in Dynamicc.Children)
                 {
                     if(child is Element3D element3d)
-                    {
-                       if(element3d.Transform is MatrixTransform3D group)
-                        {
-                          
-                            group.Matrix = matrix3Ds[index];
+                    {                     
+                       if (element3d.Transform is MatrixTransform3D group)
+                       {
+                            //group.Matrix = matrix3Ds[index];
+                            group.Matrix = matrix3Ds[index] * vm.DefaultMatrix3D;
                             index++;
 
                             //group.Matrix = group.Matrix * new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 0), 270)).Value;
                             //group.Children.Add(new RotateTransform3D(new AxisAngleRotation3D(new System.Windows.Media.Media3D.Vector3D(1, 0, 0), 270)));
-                        }
+                       }
+                    }
+                    else
+                    {
                     }
                 }
             }
@@ -158,13 +167,8 @@ namespace HelixSharpDemo.View
                var matrix3Ds =  vm.GetMatrix3s(values.ToArray());
                 Test(matrix3Ds);
 
-
-
             }
         }
-
-
-
 
         //private void view1_MouseDown3D(object sender, RoutedEventArgs e)
         //{
