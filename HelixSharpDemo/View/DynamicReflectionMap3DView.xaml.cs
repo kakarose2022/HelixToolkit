@@ -50,7 +50,9 @@ namespace HelixSharpDemo.View
                 vm.OnPlay -= Test;
                 vm.OnPlay += Test;
                 vm.ChangePostionByUi -= Test;
-                vm.ChangePostionByUi -= Test;
+                vm.ChangePostionByUi += Test;
+                vm.ChangeSliderBarValue -= ChangeSliderBar;
+                vm.ChangeSliderBarValue += ChangeSliderBar;
             }
         }
 
@@ -65,6 +67,8 @@ namespace HelixSharpDemo.View
 
                 var paramsss= new List<double>();
                 paramsss.Clear();
+                vm.MeshGeometryModel3Ds.Clear();
+
                 foreach (var sceneNode in vm.SceneNodes)
                 {
                     var oneSceneMeshGeometry3Ds = vm.SceneNodeToMeshGeometry3D(sceneNode.Root);
@@ -83,7 +87,7 @@ namespace HelixSharpDemo.View
             }
         }
 
-        public void Test(List<Matrix3D> matrix3Ds)
+        public void Test(List<Matrix3D> matrix3Ds, bool needTransform)
         {
             if (this.DataContext is DynamicReflectionMap3DViewModel vm)
             {
@@ -98,7 +102,28 @@ namespace HelixSharpDemo.View
                        if (element3d.Transform is MatrixTransform3D group)
                        {
                             //group.Matrix = matrix3Ds[index];
+                            //if (index != 1)
+                            //{
+                            //    //group.Matrix = matrix3Ds[index] * vm.DefaultMatrix3D;
+                            //    group.Matrix = matrix3Ds[index];
+                            //}
+
+                            //group.Matrix = matrix3Ds[index] * vm.DefaultMatrix3D;
+
+                            //if (index != 1)
+                            //{
+                            //    group.Matrix = matrix3Ds[index] * vm.DefaultMatrix3D;
+                            //}
+                            //else
+                            //{
+                            //    //group.Matrix = matrix3Ds[index] * vm.DefaultMatrix3D;
+                            //}
+
                             group.Matrix = matrix3Ds[index] * vm.DefaultMatrix3D;
+                            //group.Matrix = matrix3Ds[index] * vm.DefaultMatrix3D;
+
+                            //group.Matrix = matrix3Ds[index] * vm.DefaultMatrix3D;
+
                             index++;
 
                             //group.Matrix = group.Matrix * new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 0), 270)).Value;
@@ -112,17 +137,26 @@ namespace HelixSharpDemo.View
             }
         }
 
+        private void ChangeSliderBar(float sliderBarValue)
+        {
+           var sliderbars =  FindSlidersInStackPanel(newS);
+            if (sliderbars !=null)
+            {
+                sliderbars[0].Value = sliderBarValue;
+            }
+        }
 
         private double AddSliderBar()
         {
             Slider newSlider = new Slider
             {
-                Minimum = 0,
-                Maximum = 100,
-                Value = 50,
+                Minimum = -150,
+                Maximum = 150,
+                Value = 0,
                 Width = 110,
                 Height = 26,
                 TickFrequency = 1,
+                
             };
 
             TextBox textBox = new TextBox();
@@ -164,9 +198,8 @@ namespace HelixSharpDemo.View
                     values.Add(slider.Value);
                 }
 
-               var matrix3Ds =  vm.GetMatrix3s(values.ToArray());
-                Test(matrix3Ds);
-
+                var matrix3Ds =  vm.GetMatrix3s(values.ToArray());
+                Test(matrix3Ds, false);
             }
         }
 
@@ -224,6 +257,35 @@ namespace HelixSharpDemo.View
 
             var maxDimension = Math.Max(width, Math.Max(height, depth));
             return maxDimension;
+        }
+
+
+        public static List<Slider> FindSlidersInStackPanel(StackPanel stackPanel)
+        {
+            List<Slider> sliders = new List<Slider>();
+            FindSlidersRecursive(stackPanel, sliders);
+            return sliders;
+        }
+
+        private static void FindSlidersRecursive(DependencyObject parent, List<Slider> sliders)
+        {
+            int childCount = VisualTreeHelper.GetChildrenCount(parent);
+
+            for (int i = 0; i < childCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+
+                if (child is Slider slider)
+                {
+                    sliders.Add(slider);
+                }
+
+                // 继续递归查找子元素
+                if (VisualTreeHelper.GetChildrenCount(child) > 0)
+                {
+                    FindSlidersRecursive(child, sliders);
+                }
+            }
         }
     }
 }

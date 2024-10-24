@@ -49,6 +49,7 @@
             ShowTriangleCountInfo="True"
             TextBrush="White"
             UseDefaultGestures="True">
+
             <hx:Viewport3DX.InputBindings>
                 <KeyBinding Key="B" Command="hx:ViewportCommands.BackView" />
                 <KeyBinding Key="F" Command="hx:ViewportCommands.FrontView" />
@@ -58,8 +59,8 @@
                 <KeyBinding Key="R" Command="hx:ViewportCommands.RightView" />
                 <KeyBinding Command="hx:ViewportCommands.ZoomExtents" Gesture="Control+E" />
                 <MouseBinding Command="hx:ViewportCommands.Rotate" Gesture="RightClick" />
-                <!--<MouseBinding Command="hx:ViewportCommands.Zoom" Gesture="MiddleClick" />-->
-                <MouseBinding Command="hx:ViewportCommands.Pan" Gesture="MiddleClick" />
+                <MouseBinding Command="hx:ViewportCommands.Zoom" Gesture="MiddleClick" />
+                <MouseBinding Command="hx:ViewportCommands.Pan" Gesture="LeftClick" />
             </hx:Viewport3DX.InputBindings>
 
             <hx:ShadowMap3D OrthoWidth="200" />

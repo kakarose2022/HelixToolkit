@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Model\Quat.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Remove="Cubemap_Grandcanyon.dds" />
     <None Remove="ViewModel\TextureNoise1_dot3.dds" />
     <None Remove="View\Cubemap_Grandcanyon.dds" />
@@ -30,6 +34,7 @@
     <PackageReference Include="HelixToolkit.SharpDX.Assimp" Version="2.25.0" />
     <PackageReference Include="HelixToolkit.SharpDX.Core.Wpf" Version="2.25.0" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
+    <PackageReference Include="Rhino3dm" Version="8.9.0" />
   </ItemGroup>
 
 </Project>

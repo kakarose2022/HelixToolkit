@@ -10,6 +10,7 @@
     Width="800"
     Height="450"
     d:DataContext="{d:DesignInstance Type=viewmodel:MeshGeometry3DViewModel}"
+    Loaded="UserControl_Loaded"
     mc:Ignorable="d">
     <Grid>
         <Grid.ColumnDefinitions>
@@ -28,11 +29,13 @@
             CoordinateSystemLabelForeground="Gray"
             EffectsManager="{Binding EffectsManager}"
             FXAALevel="Low"
-            IsPanEnabled="False"
+            IsPanEnabled="True"
             ModelUpDirection="0,0,1"
+            RotateAroundMouseDownPoint="True"
             ShowCoordinateSystem="False"
             TextBrush="Black"
-            UseDefaultGestures="False">
+            UseDefaultGestures="False"
+            ZoomAroundMouseDownPoint="True">
             <hx:Viewport3DX.InputBindings>
                 <KeyBinding Key="B" Command="hx:ViewportCommands.BackView" />
                 <KeyBinding Key="F" Command="hx:ViewportCommands.FrontView" />
@@ -43,6 +46,7 @@
                 <KeyBinding Command="hx:ViewportCommands.ZoomExtents" Gesture="Control+E" />
                 <MouseBinding Command="hx:ViewportCommands.Rotate" Gesture="RightClick" />
                 <MouseBinding Command="hx:ViewportCommands.Zoom" Gesture="MiddleClick" />
+                <MouseBinding Command="hx:ViewportCommands.Pan" Gesture="LeftClick" />
             </hx:Viewport3DX.InputBindings>
 
             <!--#region 光源-->
@@ -58,9 +62,10 @@
                 Offset="-1000" />-->
             <!--#endregion-->
 
-            <hx:CompositeModel3D>
-                <hx:LineGeometryModel3D Geometry="{Binding AxisModel}" Color="White" />
-            </hx:CompositeModel3D>
+            <hx:CompositeModel3D x:Name="aaaa" />
+
+
+
             <hx:CompositeModel3D>
                 <hx:MeshGeometryModel3D x:Name="text" Geometry="{Binding MeshModel}" />
             </hx:CompositeModel3D>

@@ -35,6 +35,7 @@ namespace HelixSharpDemo.ViewModel
             {
                 if (selectObject != value)
                 {
+                    ManipulatorVisibility = Visibility.Visible;
                     PostSelectedEffect(selectObject, false);
                     if (Set(ref selectObject, value))
                     {
@@ -47,39 +48,12 @@ namespace HelixSharpDemo.ViewModel
                         }
                     }
                 }
+
+                if(selectObject == null)
+                {
+                   ManipulatorVisibility = Visibility.Hidden;
+                }
             }
-        }
-
-        private void SceneNode_OnTransformChanged(object? sender, TransformArgs e)
-        {
-            var m = e.Transform;
-            m.Decompose(out var scale, out var rotation, out var translation);
-            var scaleMatrix = Matrix.Scaling(scale);
-            var rotationMatrix = Matrix.RotationQuaternion(rotation);
-
-            var aa = AngleToDegree(rotation);
-            if (aa > 150 || aa < -150)
-            {
-                TextInfo = $"机器人越界 角度 {aa}  弧度{rotation.Angle}。。。";
-            }
-            else
-            {
-                TextInfo = $"机器人正常角度 角度 {aa}  弧度{rotation.Angle}。。。";
-            }
-
-            //Trace.WriteLine($" scaleMatrix {scaleMatrix}");
-            //Trace.WriteLine($" rotationMatrix {rotationMatrix}");
-
-            //if (centerOffset != Vector3.Zero)
-            //{
-            //    var org = Matrix.Translation(-centerOffset) * scaleMatrix * rotationMatrix * Matrix.Translation(centerOffset);
-            //    translationVector = translation - org.TranslationVector;
-            //}
-            //else
-            //{
-            //    translationVector = m.TranslationVector;
-            //}
-            //OnUpdateSelfTransform();
         }
 
         private Geometry3D selectedGeometry;
@@ -220,14 +194,25 @@ namespace HelixSharpDemo.ViewModel
             }
         }
 
+        private Visibility manipulatorVisibility;
+
+        public Visibility ManipulatorVisibility
+        {
+            get { return manipulatorVisibility; }
+            set 
+            {
+                Set(ref manipulatorVisibility, value);
+            }
+        }
+
         private Matrix PreMatrix;
         private Matrix CurrentMatrix;
-
         #endregion
 
         #region 运动
         private RotateTransform3D R = new RotateTransform3D();
         private TranslateTransform3D T = new TranslateTransform3D();
+        private bool isMoveByUi = false;
         #endregion
 
         public ICommand SetCameraPostionCommand { private set; get; }
@@ -238,12 +223,14 @@ namespace HelixSharpDemo.ViewModel
         public delegate void ChangeDyContentEvent();
         public event ChangeDyContentEvent? ChangeDyContent;
 
-        public delegate void OnPlayEvent(List<Matrix3D> matrix3Ds);
+        public delegate void OnPlayEvent(List<Matrix3D> matrix3Ds,bool needTransform);
         public event OnPlayEvent? OnPlay;
 
-        public delegate void ChangePostionByUiEvent(List<Matrix3D> matrix3Ds);
+        public delegate void ChangePostionByUiEvent(List<Matrix3D> matrix3Ds, bool needTransform);
         public event ChangePostionByUiEvent? ChangePostionByUi;
 
+        public delegate void ChangeSliderBarEvent(float sliderbarValue);
+        public event ChangeSliderBarEvent? ChangeSliderBarValue;
 
         private HelixToolkit.Wpf.SharpDX.Viewport3DX viewport { set; get; }
 
@@ -270,8 +257,10 @@ namespace HelixSharpDemo.ViewModel
             MeshGeometryModel3Ds = new Dictionary<string, MeshGeometryModel3D>();
            
             // 沿着x轴旋转
-            DefaultMatrix3D = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 0), 270)).Value 
-                               * new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 1, 0), 0)).Value;
+            //DefaultMatrix3D = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 0), 270)).Value 
+            //                   * new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 1, 0), 0)).Value;
+
+            DefaultMatrix3D = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(1, 0, 0), 270)).Value;
 
             var combinedTransform = new Transform3DGroup();
             combinedTransform.Children.Add(new MatrixTransform3D(DefaultMatrix3D));
@@ -307,6 +296,7 @@ namespace HelixSharpDemo.ViewModel
             ReloadCameraCommand= new RelayCommand(o =>
             {
                 ReloadFile();
+                SelectObject = null;
             });
 
             RobotPlayCommand = new RelayCommand(async o =>
@@ -350,13 +340,17 @@ namespace HelixSharpDemo.ViewModel
             }
             else if (selectIndex == 3)
             {
-                for (int i = 0; i < 10; i++)
-                {
-                    await LoadModelFile(Path.Combine(path, $"part{i}.stl"));
-                }
+                await LoadModelFile(Path.Combine(path, $"RA09A-06-Base.3ds"));
+                await LoadModelFile(Path.Combine(path, $"RA09A-06-Link1.3ds"));
+                await LoadModelFile(Path.Combine(path, $"RA09A-06-Link2.3ds"));
+                await LoadModelFile(Path.Combine(path, $"RA09A-06-Link3.3ds"));
+                await LoadModelFile(Path.Combine(path, $"RA09A-06-Link4.3ds"));
+                await LoadModelFile(Path.Combine(path, $"RA09A-06-Link5.3ds"));
+                await LoadModelFile(Path.Combine(path, $"RA09A-06-Link6.3ds"));
             }
 
             Reload();
+            ResetManipulatorCommand.Execute(null);
         }
 
         public void InitDefaultCoordiate()
@@ -454,23 +448,13 @@ namespace HelixSharpDemo.ViewModel
                         }
 
                         RobotInitTransform(path, loadedScene?.Root);
-                        loadedScene.Root.Tag = loadedScene?.Root.ModelMatrix;
-
-                        //SceneNodeToMeshGeometry3D(loadedScene?.Root);
-
-                        //if (loadedScene.HasAnimation)
-                        //{
-                        //    foreach (var ani in loadedScene.Animations)
-                        //    {
-                        //        Animations.Add(ani);
-                        //    }
-                        //}
+                        loadedScene.Root.Tag = new SceneNodeViewModel(path);
                     }
+
                     TextInfo = "加载完成";
                     SceneNodes.Add(loadedScene);
 
-                   var animations = loadedScene?.Animations.Select(x => x.Name).ToArray();
-
+                    var animations = loadedScene?.Animations.Select(x => x.Name).ToArray();
                     return loadedScene;
                 }
                 catch (Exception ex)
@@ -506,7 +490,8 @@ namespace HelixSharpDemo.ViewModel
                         IsThrowingShadow = false,
                         ////将模型的变换矩阵转换为 WPF 所需的 Matrix3D 格式
                         // node.ModelMatrix
-                        Transform = new MatrixTransform3D(node.ModelMatrix.ToMatrix3D())
+                        Transform = new MatrixTransform3D(node.ModelMatrix.ToMatrix3D()),
+                        Tag = node.Tag,                     
                     };
 
                     MeshGeometryModel3Ds.Add(model.GUID.ToString(), model);
@@ -715,8 +700,72 @@ namespace HelixSharpDemo.ViewModel
             }
         }
 
+        /// <summary>
+        /// 监听SceneNode Transform 计算旋转角度
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SceneNode_OnTransformChanged(object? sender, TransformArgs e)
+        {
+            var m = e.Transform;
+            m.Decompose(out var scale, out var rotation, out var translation);
+
+            // 定义已知的旋转，绕 X 轴旋转 270 度
+            var knownRotation = Quaternion.RotationAxis(new Vector3(1, 0, 0), (float)(270 * Math.PI / 180.0));  // 270 度转换为弧度
+            // 计算已知旋转的逆（共轭）
+            var inverseKnownRotation = Quaternion.Invert(knownRotation);
+            // 应用逆旋转，将其从当前旋转中移除
+            var adjustedRotation = Quaternion.Multiply(rotation, inverseKnownRotation);
+
+            if (sender is MeshNode meshNode )
+            {
+                MeshGeometryModel3D meshGeometryModel3D = new MeshGeometryModel3D();
+                MeshGeometryModel3Ds.TryGetValue(meshNode.GUID.ToString(), out meshGeometryModel3D);
+                if (meshGeometryModel3D != null && meshGeometryModel3D.Tag is SceneNodeViewModel vm)
+                {
+                    // 现在，adjustedRotation 就是不包含已知旋转的四元数
+                    var angle = AngleToDegree(adjustedRotation,vm);
+
+                    //var scaleMatrix = Matrix.Scaling(scale);
+                    //var rotationMatrix = Matrix.RotationQuaternion(rotation);
+
+                    if (angle > 150 || angle < -150)
+                    {
+                        TextInfo = $"机器人越界 角度 {angle}  弧度 {rotation.Angle}。";
+                    }
+                    else
+                    {
+                        TextInfo = $"机器人正常角度 角度 {angle}  弧度{rotation.Angle}。。。";
+                    }
+
+                    if (isMoveByUi)
+                    {
+                        List<double> values = new List<double>() { 0, 0, 0, 0, 0, 0 };
+
+                        if (vm.pathName.Contains("part1"))
+                        {
+                            values[0] = angle;
+                        }
+                        else if (vm.pathName.Contains("part2"))
+                        {
+                            values[1] = angle;
+                        }
+                        ChangePostionByUi?.Invoke(GetMatrix3s(values.ToArray()), true);
+                        //ChangeSliderBarValue?.Invoke(angle);
+                    }
+                }
+            }
+
+        }
+
         public List<Matrix3D> GetMatrix3s(double[] angles)
         {
+
+            for (int i = 0; i < angles.Length; i++)
+            {
+                Trace.WriteLine($"angle{i}:{angles[i]}");
+            }
+
             List<Matrix3D> matrices = new List<Matrix3D>();
             matrices.Add(new RotateTransform3D(
                 new AxisAngleRotation3D(new Vector3D(0.0, 0.0, 1.0), 0.0),
@@ -770,7 +819,7 @@ namespace HelixSharpDemo.ViewModel
 
         private void Move(List<Matrix3D> matrix3Ds)
         {
-            OnPlay?.Invoke(matrix3Ds);
+            OnPlay?.Invoke(matrix3Ds,false);
         }
 
         private void ResetManipulatorDirection()
@@ -791,7 +840,17 @@ namespace HelixSharpDemo.ViewModel
                 if (IsUIMeshGeometryModel3D(m))
                 {
                     Target = null;
-                    CenterOffset = m.Geometry.Bound.Center; // Must update this before updating target        
+
+                    // Must update this before updating target
+                    if(m.Tag is SceneNodeViewModel vm && vm.isBoundCenter)
+                    {
+                        CenterOffset = m.Geometry.Bound.Center;
+                    }
+                    else
+                    {
+                        CenterOffset = new Vector3(0.0f, 0.0f, 0.0f);
+                    }
+
                     SizeScale = GetBoundBoxMaxWidth(m);
                     SelectObject = m;
                     Target = e.HitTestResult.ModelHit as Element3D;
@@ -801,6 +860,7 @@ namespace HelixSharpDemo.ViewModel
                 {
                     if (SelectObject is Element3D element3D)
                     {
+                        isMoveByUi = true;
                         PreMatrix = element3D.SceneNode.TotalModelMatrix;
                         PreMatrix.Decompose(out var scale, out var rotation, out var translation);
                         var scaleMatrix = Matrix.Scaling(scale);
@@ -820,17 +880,18 @@ namespace HelixSharpDemo.ViewModel
                 //选中的是模型节点
                 if (IsUIMeshGeometryModel3D(m))
                 {
-                    Target = null;
-                    CenterOffset = m.Geometry.Bound.Center; // Must update this before updating target
-                    Target = e.HitTestResult.ModelHit as Element3D;
-                    SizeScale = GetBoundBoxMaxWidth(m);
-                    Trace.WriteLine($" Mouse Down {DateTime.Now} Postion {viewport.CursorPosition?.ToString()}");
+                    //Target = null;
+                    //CenterOffset = m.Geometry.Bound.Center; // Must update this before updating target
+                    //Target = e.HitTestResult.ModelHit as Element3D;
+                    //SizeScale = GetBoundBoxMaxWidth(m);
+                    //Trace.WriteLine($" Mouse Down {DateTime.Now} Postion {viewport.CursorPosition?.ToString()}");
                 }
                 // 选中的是Manipulator
                 else
                 {
                     if(SelectObject is Element3D element3D)
                     {
+                        isMoveByUi = false;
                         CurrentMatrix = element3D.SceneNode.TotalModelMatrix;
                         CurrentMatrix.Decompose(out var scale, out var rotation, out var translation);
 
@@ -838,8 +899,6 @@ namespace HelixSharpDemo.ViewModel
                         var rotationMatrix = Matrix.RotationQuaternion(rotation);
                         var translationMatrix =  Matrix.Translation(translation);
                         Trace.WriteLine($"UP   Scale {scale} Rotation {rotation} Translation {translation}");
-
-                        CalQuaternion();
                     }
                 }
             }
@@ -859,32 +918,9 @@ namespace HelixSharpDemo.ViewModel
         #endregion
 
         #region 计算通用方法
-
-        private void CalQuaternion()
+        private float AngleToDegree(Quaternion rotation, SceneNodeViewModel vm)
         {
-            PreMatrix.Decompose(out var preScale, out var preRotation, out var preTranslation);
-            CurrentMatrix.Decompose(out var scale, out var rotation, out var translation);
-
-            //弧度制旋转角度
-            var aa = preRotation.Angle;
-            var bb = rotation.Angle;
-
-            float preangle = 2.0f * (float)Math.Acos(preRotation.W);
-            float preangleInDegrees = preangle * (180.0f / (float)Math.PI);
-
-            float angle = 2.0f * (float)Math.Acos(rotation.W);
-
-            //角度制
-            float angleInDegrees = angle * (180.0f / (float)Math.PI);
-
-
-            //double angleInRadians = HelixSharpDemo.Model.Quaternion.GetRotationAngle(preRotation, rotation);
-            //double angleInDegrees = angleInRadians * (180 / Math.PI);
-        }
-
-        private float AngleToDegree(Quaternion rotation)
-        {
-            // 计算角度（弧度制）
+             // 计算角度（弧度制）
             float angleInRadians = 2.0f * (float)Math.Acos(rotation.W);
 
             // 计算旋转轴，注意需要归一化
@@ -904,18 +940,31 @@ namespace HelixSharpDemo.ViewModel
             // 将角度转换为角度制
             float angleInDegrees = angleInRadians * (180.0f / (float)Math.PI);
 
+            // 确保角度在 [-180, 180) 的范围内
+            if (angleInDegrees > 180.0f)
+            {
+                angleInDegrees -= 360.0f;
+            }
+
             // 判断旋转轴，决定角度的正负
-            if (axis.Z < 0)  // 假设 z 轴为基准
+            if (vm.axisTye == AxisTye.Z &&  axis.Z > 0)  // 假设 z 轴为基准
+            {
+               angleInDegrees = -angleInDegrees;
+            }
+            else if (vm.axisTye == AxisTye.Y && axis.Y < 0)  // 假设 y 轴为基准
             {
                 angleInDegrees = -angleInDegrees;
             }
+            else if (vm.axisTye == AxisTye.X && axis.X > 0)
+            {
+                //angleInDegrees = -angleInDegrees;
+            }
 
-            Console.WriteLine($"旋转轴: {axis}");
-            Console.WriteLine($"旋转角度: {angleInDegrees} 度");
+
+            //Trace.WriteLine($"旋转轴: {axis}");
+            //Trace.WriteLine($"旋转角度: {angleInDegrees} 度");
             return angleInDegrees;
         }
-
-
         #endregion
 
 
@@ -990,9 +1039,9 @@ namespace HelixSharpDemo.ViewModel
 
         private void RobotInitTransform(string path, SceneNode sceneNode)
         {
-            var finalMatrix = DefaultMatrix3D;
+           //var finalMatrix = DefaultMatrix3D;
             //初始位姿
-            //var finalMatrix = Matrix3D.Identity;
+            var finalMatrix = Matrix3D.Identity;
 
             if (path.Contains("part0"))
             {

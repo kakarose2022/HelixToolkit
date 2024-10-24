@@ -38,19 +38,23 @@
             EnableDesignModeRendering="False"
             EnableSwapChainRendering="False"
             FixedRotationPointEnabled="True"
+            IsInertiaEnabled="True"
             IsMoveEnabled="True"
-            IsPanEnabled="False"
+            IsPanEnabled="True"
             IsRotationEnabled="True"
             IsShadowMappingEnabled="True"
             IsZoomEnabled="True"
+            LeftRightRotationSensitivity="-1"
             ShowCameraInfo="True"
+            ShowCameraTarget="False"
             ShowCoordinateSystem="True"
             ShowFrameDetails="True"
             ShowFrameRate="True"
             ShowTriangleCountInfo="True"
             TextBrush="White"
             UseDefaultGestures="True"
-            ZoomAroundMouseDownPoint="False">
+            ZoomAroundMouseDownPoint="True">
+
             <hx:Viewport3DX.InputBindings>
                 <KeyBinding Key="B" Command="hx:ViewportCommands.BackView" />
                 <KeyBinding Key="F" Command="hx:ViewportCommands.FrontView" />
@@ -63,6 +67,7 @@
                 <MouseBinding Command="hx:ViewportCommands.Zoom" Gesture="MiddleClick" />
                 <MouseBinding Command="hx:ViewportCommands.Pan" Gesture="LeftClick" />
             </hx:Viewport3DX.InputBindings>
+
             <i:Interaction.Triggers>
                 <i:EventTrigger EventName="MouseDown3D">
                     <i:CallMethodAction MethodName="OnMouseDown3DHandler" TargetObject="{Binding}" />
@@ -76,20 +81,30 @@
             <!--#region 光源-->
             <hx:AmbientLight3D Color="White" />
             <!--<hx:DirectionalLight3D Direction="{Binding Camera.LookDirection}" Color="Gray" />-->
+            <!--  光源 1：来自左上角  -->
             <hx:DirectionalLight3D Direction="-10, -40, 10" Color="White" />
+
+            <!--  光源 2：来自右上角  -->
+            <hx:DirectionalLight3D Direction="-20, -10, -10" Color="White" />
+
+            <!--  光源 3：来自左下角  -->
+            <hx:DirectionalLight3D Direction="-10, 40, 10" Color="White" />
+
+            <!--  光源 4：来自右下角  -->
+            <hx:DirectionalLight3D Direction="10, 40, 10" Color="White" />
+
             <!--#endregion-->
 
             <!--#region  地图-->
             <!--<hx:EnvironmentMap3D Texture="{Binding EnvironmentMap}" />-->
             <hx:AxisPlaneGridModel3D
                 x:Name="plane"
-                AutoSpacing="False"
+                AutoSpacing="True"
                 RenderShadowMap="True"
-                Offset="-260" />
+                Offset="-160" />
             <!--#endregion-->
 
             <!--#region  模型-->
-            <!--<hx:Element3DPresenter Content="{Binding GroupModel, UpdateSourceTrigger=PropertyChanged}" />-->
             <hx:DynamicReflectionMap3D x:Name="Dynamicc" />
             <!--#endregion-->
 
@@ -101,7 +116,8 @@
                 EnableXRayGrid="True"
                 SizeScale="{Binding SizeScale}"
                 Target="{Binding Target, UpdateSourceTrigger=PropertyChanged}"
-                Transform="{Binding ManipulatorTransform}">
+                Transform="{Binding ManipulatorTransform}"
+                Visibility="{Binding ManipulatorVisibility}">
                 <i:Interaction.Triggers>
                     <i:EventTrigger EventName="MouseDown3D">
                         <i:CallMethodAction MethodName="OnMouseDown3DHandler" TargetObject="{Binding}" />
